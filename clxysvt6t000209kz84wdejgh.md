@@ -3,6 +3,7 @@ title: "Machine Learning during Covid-19"
 datePublished: Fri Jun 28 2024 14:40:26 GMT+0000 (Coordinated Universal Time)
 cuid: clxysvt6t000209kz84wdejgh
 slug: machine-learning-during-covid-19
+cover: https://cdn.hashnode.com/res/hashnode/image/upload/v1719585725966/cbb4cbb6-cdac-442a-9dbf-b9fb6f5eca72.jpeg
 ogImage: https://cdn.hashnode.com/res/hashnode/image/upload/v1719585440980/c315bf21-e56d-4725-8ad2-796bd73d6556.jpeg
 tags: ai, data-science, machine-learning, covid-19
 
