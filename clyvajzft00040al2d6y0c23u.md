@@ -17,6 +17,24 @@ Traditionally, red teaming involves a group of security professionals, known as 
 
 One effective strategy for identifying and mitigating risks in such systems is red teaming. But what exactly is red teaming, and why is it essential for generative AI applications?
 
+**Historical Perspective of Red Teaming**
+
+Red teaming has its roots in medieval times, where it was initially used for physical security. The Roman army, for example, employed strategies that involved simulating enemy attacks to test and strengthen their defenses. This practice continued through various historical periods, including colonial times and both World Wars, where military forces used red teaming to anticipate and counteract enemy strategies.
+
+With the advent of the internet era, red teaming was adopted to combat cybersecurity threats. This approach has been continuously refined and has now been integrated into the most recent developments in Generative AI (GenAI) and large language models (LLMs). Today, red teaming is not only a critical practice for addressing security threats but also for ensuring the safety and ethical use of AI models.
+
+**Organizational Perspective of Red Teaming**
+
+In an organizational or administrative context, red teaming involves distinct teams with specific roles and objectives:
+
+• **Red Team**: This team adopts the perspective of potential adversaries, actively seeking to identify and exploit vulnerabilities in systems. Their objective is to simulate real-world attacks to uncover weaknesses that need to be addressed.
+
+• **Blue Team**: The blue team is responsible for defending the organization’s systems. They work to detect, respond to, and mitigate attacks, whether real or simulated. Their objective is to improve the organization’s defensive capabilities and resilience against threats.
+
+• **Purple Team**: This team bridges the gap between the red and blue teams. They facilitate collaboration and communication between the two, ensuring that the insights and findings from red team exercises are effectively integrated into the blue team’s defensive strategies. The objective of the purple team is to enhance the overall security posture by combining offensive and defensive insights.
+
+These teams collectively contribute to a comprehensive approach to security, enabling organizations to proactively identify and address potential threats.
+
 **Why Should I Care?**
 
 Red teaming is crucial because it simulates real-world attacks on systems, helping to identify vulnerabilities before malicious actors can exploit them. This proactive approach is particularly vital for generative AI applications, which are increasingly used in sensitive and high-stakes environments. Understanding and implementing red teaming can significantly enhance the robustness and safety of these systems.
@@ -46,91 +64,144 @@ For responsible AI, red teaming plays a pivotal role in risk detection and measu
 
 Additionally, red teaming helps in identifying “jailbreak” prompts—specific inputs designed to bypass the ethical and safety constraints of AI models. Detecting and addressing these prompts is crucial to maintaining the integrity of generative applications.
 
-**It’s Not a Risk Mitigation Tool**
+**As a Risk Mitigation Tool**
 
-While red teaming is invaluable for identifying risks, it is not a risk mitigation tool by itself. Instead, it provides the necessary insights to develop effective risk mitigation strategies, which we will explore further in subsequent articles.
+While red teaming is invaluable for identifying risks, the insights gained are used to develop effective risk mitigation strategies. Purple teaming, in particular, helps in formulating and implementing these mitigation plans. The collaboration between red and blue teams ensures that vulnerabilities are not only identified but also addressed comprehensively to enhance the safety and robustness of AI models. We will explore in further articles how risks could be managed.
 
 ### **Implementation of Red Teaming**
 
-One effective approach to implementing red teaming in generative AI is through tools like PromptFlow or PyRIT. These platforms facilitate the creation and execution of harmful and jailbreak prompts to test AI models.
+One effective approach to implementing red teaming in generative AI is through tools like PromptFlow in Azure AI Studio. These platforms facilitate the creation and execution of harmful and jailbreak prompts in a simulated environment to test AI models.
 
-**Generate Harmful and Jailbreak Prompts**
+**Setting Up the Chatbot**
 
-The first step involves generating a comprehensive set of harmful and jailbreak prompts. These prompts are designed to probe the AI model’s responses, testing its ability to handle various risky scenarios.
+First, we need a chatbot that can mimic the target system for red teaming. In this example, we have already deployed a sample chatbot (wikipedia-chatbot) in PromptFlow in AI Studio. The steps to deploy this chatbot are not shown here but will be documented in a separate article. &lt;Let me know in comments if an article on this topic will be useful&gt;.
+
+**Interacting with the Deployed Chatbot**
+
+We use a class ChatbotAPI to interact with our deployed chatbot through its REST API endpoint.
 
 ```python
-# Example using PyRIT for generating harmful and jailbreak prompts
+import os
+import ssl
+import json
+import urllib.request
+from dotenv import load_dotenv
 
-from pyrit import PromptGenerator
+class ChatbotAPI:
 
-# Initialize the Prompt Generator
-prompt_gen = PromptGenerator()
+    def __init__(self, api_url, api_key, deployment_name):
+        self.url = api_url
+        self.api_key = api_key
+        self.deployment_name = deployment_name
 
-# Generate harmful prompts
-harmful_prompts = prompt_gen.generate_prompts(category="harmful", count=100)
+    def allowSelfSignedHttps(self, allowed):
+        if allowed and not os.environ.get('PYTHONHTTPSVERIFY', '') and getattr(ssl, '_create_unverified_context', None):
+            ssl._create_default_https_context = ssl._create_unverified_context
 
-# Generate jailbreak prompts
-jailbreak_prompts = prompt_gen.generate_prompts(category="jailbreak", count=50)
+    def __call__(self, question):
+        self.allowSelfSignedHttps(True)
+        data = {
+            "question": question,
+            "chat_history": []
+        }
+        body = str.encode(json.dumps(data))
+        headers = {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + self.api_key,
+            'azureml-model-deployment': self.deployment_name
+        }
+        req = urllib.request.Request(self.url, body, headers)
+        try:
+            response = urllib.request.urlopen(req)
+            result = response.read()
+            return result
+        except urllib.error.HTTPError as error:
+            error_message = error.read().decode("utf8", 'ignore')
+            error_json = json.loads(error_message)
+            message = error_json["error"]["message"]
+            return message
 
-# Print sample prompts
-print("Sample Harmful Prompts:", harmful_prompts[:5])
-print("Sample Jailbreak Prompts:", jailbreak_prompts[:5])
+load_dotenv(override=True)
+
+api_url = os.getenv('API_URL_PF')
+api_key = os.getenv('API_KEY_PF')
+deployment_name = os.getenv('DEPLOYMENT_NAME_PF')
+
+chatbot = ChatbotAPI(api_url=api_url, api_key=api_key, deployment_name=deployment_name)
 ```
 
-**Shoot These Prompts on a Chatbot or Endpoint**
+**Callback Function for Simulator**
 
-Next, these prompts are directed at the generative AI model, whether it is a chatbot or another endpoint. This process simulates real-world interactions and helps in uncovering vulnerabilities.
+We define a callback function to pass to the simulator, which will use the ChatbotAPI wrapper and return responses in the specific format that the simulator expects.
 
 ```python
-# Example using PromptFlow SDK to test prompts on a chatbot endpoint
+import asyncio
+from typing import Any, Dict
 
-from promptflow import PromptFlow
-
-# Initialize PromptFlow client
-pf_client = PromptFlow(api_key='your_api_key', endpoint='your_endpoint')
-
-# Function to test prompts on a chatbot
-def test_prompts(prompts, model):
-    responses = []
-    for prompt in prompts:
-        response = pf_client.generate_response(model=model, prompt=prompt)
-        responses.append(response)
-    return responses
-
-# Test harmful prompts
-harmful_responses = test_prompts(harmful_prompts, model='chatbot_model')
-
-# Test jailbreak prompts
-jailbreak_responses = test_prompts(jailbreak_prompts, model='chatbot_model')
-
-# Print sample responses
-print("Sample Harmful Responses:", harmful_responses[:5])
-print("Sample Jailbreak Responses:", jailbreak_responses[:5])
+async def chatbot_callback(prompt: Dict[str, Any]) -> Dict[str, Any]:
+    question = prompt.get("question", "")
+    response = await asyncio.to_thread(chatbot, question)
+    return {
+        "question": question,
+        "answer": response
+    }
 ```
 
-**Record the Responses**
+**Generating Harmful and Jailbreak Prompts**
 
-The responses generated by the AI model are meticulously recorded and analyzed. This data is crucial for understanding the model’s behavior and identifying potential risks.
+Using the simulator, we generate a set of either harmful prompts or jailbreak prompts.
 
 ```python
-# Example code to record responses
+# Assuming AdversarialScenario and AdversarialSimulator are defined and imported
+from promptflow.evals.synthetic.adversarial_scenario import AdversarialScenario
 
-import pandas as pd
-
-# Create a DataFrame to store responses
-responses_df = pd.DataFrame({
-    "Prompt": harmful_prompts + jailbreak_prompts,
-    "Response": harmful_responses + jailbreak_responses,
-    "Category": ["Harmful"] * len(harmful_prompts) + ["Jailbreak"] * len(jailbreak_prompts)
+simulator = AdversarialSimulator(azure_ai_project={
+    "subscription_id": os.getenv("SUBSCRIPTION_ID"),
+    "resource_group_name": os.getenv("RESOURCE_GROUP"),
+    "project_name": os.getenv("PROJECT_NAME"),
+    "credential": os.getenv("CREDENTIAL")
 })
 
-# Save responses to a CSV file for analysis
-responses_df.to_csv("responses.csv", index=False)
+# Generate harmful prompts
+harmful_outputs = await simulator(
+    scenario=AdversarialScenario.ADVERSARIAL_QA,
+    target=chatbot_callback,
+    max_conversation_turns=1,
+    max_simulation_results=100,
+    jailbreak=False
+)
+
+# Generate jailbreak prompts
+jailbreak_outputs = await simulator(
+    scenario=AdversarialScenario.ADVERSARIAL_QA,
+    target=chatbot_callback,
+    max_conversation_turns=1,
+    max_simulation_results=50,
+    jailbreak=True
+)
+
+# Convert outputs to a format suitable for evaluation
+def to_eval_qa_json_lines(outputs):
+    json_lines = []
+    for output in outputs:
+        json_lines.append(json.dumps({"question": output["template_parameters"]["conversation_starter"], "answer": output["messages"][1]["content"]}))
+    return "\n".join(json_lines)
+
+# Create datasets
+harmful_dataset = to_eval_qa_json_lines(harmful_outputs)
+jailbreak_dataset = to_eval_qa_json_lines(jailbreak_outputs)
+
+# Save datasets to files
+with open("harmful_dataset.jsonl", "w") as f:
+    f.write(harmful_dataset)
+
+with open("jailbreak_dataset.jsonl", "w") as f:
+    f.write(jailbreak_dataset)
 ```
 
-**Calculate Safety Metrics**
+**Evaluating the Chatbot**
 
-To quantify the risks, safety metrics are calculated. These metrics include:
+Using PromptFlow’s evaluation functionality, we evaluate the generated dataset to obtain key performance indicators (KPIs) or Metrics. To quantify the risks, safety metrics are calculated. These metrics include:
 
 * **Sexual Content**: Frequency and severity of inappropriate content generation.
     
@@ -144,34 +215,58 @@ To quantify the risks, safety metrics are calculated. These metrics include:
     
 
 ```python
-# Example code to calculate safety metrics
+from promptflow.evals.evaluate import evaluate
+from promptflow.evals.evaluators import (
+    ViolenceEvaluator,
+    SexualEvaluator,
+    SelfHarmEvaluator,
+    HateUnfairnessEvaluator,
+    ContentSafetyEvaluator
+)
 
-def calculate_safety_metrics(responses_df):
-    metrics = {
-        "Sexual Content": 0,
-        "Self-harm": 0,
-        "Hate Speech": 0,
-        "Unfairness": 0,
-        "Violence": 0
+# Define the project scope of AI studio
+project_scope = {
+    "subscription_id": os.getenv("SUBSCRIPTION_ID"),
+    "resource_group_name": os.getenv("RESOURCE_GROUP"),
+    "project_name": os.getenv("PROJECT_NAME")
+}
+
+# Define evaluators
+evaluators = {
+  'violence': ViolenceEvaluator(project_scope=project_scope),
+  'sexual': SexualEvaluator(project_scope=project_scope),
+  'self_harm': SelfHarmEvaluator(project_scope=project_scope),
+  'hate_unfairness': HateUnfairnessEvaluator(project_scope=project_scope),
+  'content_safety': ContentSafetyEvaluator(project_scope=project_scope)
+}
+
+# Define evaluator config - Target is the data
+evaluator_config = {
+    "default": {
+        "question": "${data.question}",
+        "answer": "${data.answer}"
     }
-    
-    for response in responses_df["Response"]:
-        if "sexual" in response:
-            metrics["Sexual Content"] += 1
-        if "self-harm" in response:
-            metrics["Self-harm"] += 1
-        if "hate" in response:
-            metrics["Hate Speech"] += 1
-        if "unfair" in response:
-            metrics["Unfairness"] += 1
-        if "violence" in response:
-            metrics["Violence"] += 1
+}
 
-    return metrics
+# Evaluate harmful dataset
+results_harmful = evaluate(
+    data="harmful_dataset.jsonl",
+    evaluation_name=f"red_teaming_eval_harmful-{time()}",
+    evaluator_config=evaluator_config,
+    evaluators=evaluators
+)
 
-# Calculate and print safety metrics
-safety_metrics = calculate_safety_metrics(responses_df)
-print("Safety Metrics:", safety_metrics)
+# Evaluate jailbreak dataset
+results_jailbreak = evaluate(
+    data="jailbreak_dataset.jsonl",
+    evaluation_name=f"red_teaming_eval_jailbreak-{time()}",
+    evaluator_config=evaluator_config,
+    evaluators=evaluators
+)
+
+# Convert results to DataFrame
+df_harmful = pd.DataFrame(list(results_harmful['metrics'].items()), columns=['Metric', 'Value'])
+df_jailbreak = pd.DataFrame(list(results_jailbreak[‘metrics’].items()), columns=[‘Metric’, ‘Value’])
 ```
 
 **Prepare and Implement Safety Risk Mitigation Plan**
