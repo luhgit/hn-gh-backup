@@ -21,21 +21,24 @@ One effective strategy for identifying and mitigating risks in such systems is r
 
 Red teaming has its roots in medieval times, where it was initially used for physical security. The Roman army, for example, employed strategies that involved simulating enemy attacks to test and strengthen their defenses. This practice continued through various historical periods, including colonial times and both World Wars, where military forces used red teaming to anticipate and counteract enemy strategies.
 
-With the advent of the internet era, red teaming was adopted to combat cybersecurity threats. This approach has been continuously refined and has now been integrated into the most recent developments in Generative AI (GenAI) and large language models (LLMs). Today, red teaming is not only a critical practice for addressing security threats but also for ensuring the safety and ethical use of AI models.
+With the advent of the internet era, red teaming was adopted to combat cybersecurity threats. This approach has been continuously refined and has now been integrated into the most recent developments in Generative AI and large language models. Today, red teaming is not only a critical practice for addressing security threats but also for ensuring the safety and ethical use of AI models.
 
 **Organizational Perspective of Red Teaming**
 
 In an organizational or administrative context, red teaming involves distinct teams with specific roles and objectives:
 
-• **Red Team**: This team adopts the perspective of potential adversaries, actively seeking to identify and exploit vulnerabilities in systems. Their objective is to simulate real-world attacks to uncover weaknesses that need to be addressed.
+* **Red Team**: This team adopts the perspective of potential adversaries, actively seeking to identify and exploit vulnerabilities in systems. Their objective is to simulate real-world attacks to uncover weaknesses that need to be addressed.
+    
+* **Blue Team**: The blue team is responsible for defending the organization’s systems. They work to detect, respond to, and mitigate attacks, whether real or simulated. Their objective is to improve the organization’s defensive capabilities and resilience against threats
+    
+* **Purple Team**: This team bridges the gap between the red and blue teams. They facilitate collaboration and communication between the two, ensuring that the insights and findings from red team exercises are effectively integrated into the blue team’s defensive strategies. The objective of the purple team is to enhance the overall security posture by combining offensive and defensive insights.
+    
 
-• **Blue Team**: The blue team is responsible for defending the organization’s systems. They work to detect, respond to, and mitigate attacks, whether real or simulated. Their objective is to improve the organization’s defensive capabilities and resilience against threats.
-
-• **Purple Team**: This team bridges the gap between the red and blue teams. They facilitate collaboration and communication between the two, ensuring that the insights and findings from red team exercises are effectively integrated into the blue team’s defensive strategies. The objective of the purple team is to enhance the overall security posture by combining offensive and defensive insights.
+![Red Teaming Organization](https://cdn.hashnode.com/res/hashnode/image/upload/v1723451850723/a6d54fbd-4b6d-4ada-991b-929170974cc9.png align="center")
 
 These teams collectively contribute to a comprehensive approach to security, enabling organizations to proactively identify and address potential threats.
 
-**Why Should I Care?**
+**Why should I care?**
 
 Red teaming is crucial because it simulates real-world attacks on systems, helping to identify vulnerabilities before malicious actors can exploit them. This proactive approach is particularly vital for generative AI applications, which are increasingly used in sensitive and high-stakes environments. Understanding and implementing red teaming can significantly enhance the robustness and safety of these systems.
 
@@ -43,7 +46,7 @@ Red teaming is crucial because it simulates real-world attacks on systems, helpi
 
 In the context of generative AI, red teaming extends beyond traditional cybersecurity measures. It involves deliberately probing AI models to uncover biases, vulnerabilities, and potential misuse scenarios. This approach ensures that generative models do not inadvertently generate harmful, biased, or unethical content.
 
-### **In Context of Responsible AI**
+### **In the Context of Responsible AI**
 
 **Risk Detection and Measurement**
 
