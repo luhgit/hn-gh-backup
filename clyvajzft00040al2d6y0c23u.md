@@ -266,11 +266,9 @@ results_jailbreak = evaluate(
     evaluator_config=evaluator_config,
     evaluators=evaluators
 )
-
-# Convert results to DataFrame
-df_harmful = pd.DataFrame(list(results_harmful['metrics'].items()), columns=['Metric', 'Value'])
-df_jailbreak = pd.DataFrame(list(results_jailbreak[‘metrics’].items()), columns=[‘Metric’, ‘Value’])
 ```
+
+We used PromptFlow SDK and Azure AI studio to implement automated safety evaluations. Microsoft also released PyRIT (python package) tool that helps setup manual and as well as automated Red Teaming. &lt;Let me know in comments if you want me to explain PyRIT in a separate article&gt;.
 
 **Prepare and Implement Safety Risk Mitigation Plan**
 
